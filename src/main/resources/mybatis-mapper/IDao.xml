@@ -1,0 +1,357 @@
+
+<!DOCTYPE mapper
+	PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+	"http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+	
+	<mapper namespace="com.exhibition.dao.IDao">
+	
+		<!-- 멤버관련 SQL -->
+		<insert id="memberJoin">
+			INSERT INTO emember(mid, mpw, mname, memail) VALUES(#{param1},#{param2},#{param3},#{param4})
+		</insert>
+		<select id="checkId"  resultType="int" >
+			SELECT COUNT(*) FROM emember WHERE mid=#{param1}
+		</select>
+		<select id="checkIdAndPW"  resultType="int" >
+			SELECT COUNT(*) FROM emember WHERE mid=#{param1} AND mpw=#{param2}
+		</select>
+		<select id="getMemberInfo" resultType="com.exhibition.dto2.MemberDto">
+			SELECT * FROM emember WHERE mid=#{param1}
+		</select>
+		<update id="memberModify">
+			UPDATE emember SET mpw=#{param2}, mname=#{param3}, memail=#{param4}  WHERE mid=#{param1}
+		</update>
+		
+		
+		<delete id="memberDelete">
+		DELETE FROM emember WHERE mid = #{param1} AND mpw = #{param2}
+		</delete>
+		
+		
+		
+		<!--show게시판 SQL-->
+		<insert id="showWrite">
+		INSERT INTO 
+			showtbl(snum, stitle, slocation, sdday, stime, sage, sprice, userid, filecount, skind) 
+		VALUES
+			(showtbl_seq.nextval, #{param1}, #{param2}, #{param3}, #{param4},  #{param5}, #{param6}, #{param7}, #{param8},#{param9})
+		
+		</insert>
+		
+		<select id="tlist" resultType="com.exhibition.dto3.ShowDto">
+			SELECT * FROM showtbl ORDER BY snum DESC  
+		</select>
+		
+	    <select id="showList" resultType="com.exhibition.dto3.ShowDto">
+			SELECT * FROM showtbl ORDER BY snum DESC  
+		</select>
+		
+		<select id="showView" resultType="com.exhibition.dto3.ShowDto">
+		SELECT * FROM showtbl WHERE snum=#{param1}
+	     </select>
+	     
+	    <!-- 파일업로드 SQL -->
+		<insert id="fileInfoInsert">
+			INSERT INTO showfiles(filenum, sboardnum, fileoriname, filename, fileextension, fileurl) 
+			VALUES (SHOWFILE_SEQ.nextval, #{param1}, #{param2}, #{param3}, #{param4}, #{param5})
+		</insert>
+		
+		<select id="boardLatestInfo" resultType="com.exhibition.dto3.ShowDto">
+			SELECT * FROM showtbl WHERE userid = #{param1} ORDER BY snum DESC
+		</select>
+		
+		<select id="getFileInfo" resultType="com.exhibition.dto2.FileDto">
+			SELECT * FROM showfiles WHERE sboardnum=#{param1}
+		</select>
+		
+		<!-- 조인테이블 showDto와 fileDto -->
+		<resultMap type="com.exhibition.dto2.FileDto" id="FileDto2">
+			<result property="filenum" column="filenum"/>
+			<result property="sboardnum" column="sboardnum"/>
+			<result property="fileoriname" column="fileoriname"/>
+			<result property="filename" column="filename"/>
+			<result property="fileextension" column="fileextension"/>	
+			<result property="fileurl" column="fileurl"/>	
+		</resultMap>
+
+		<resultMap type="com.exhibition.dto3.ShowDto" id="ShowDto2">
+			<result property="snum" column="snum"/>
+			<result property="stitle" column="stitle"/>
+			<result property="slocation" column="slocation"/>
+			<result property="sdday" column="sdday"/>	
+			<result property="sage" column="sage"/>	
+			<result property="stime" column="stime"/>	
+			<result property="sage" column="sage"/>	
+			<result property="sprice" column="sprice"/>	
+			<result property="userid" column="userid"/>	
+			<result property="filecount" column="filecount"/>
+			<result property="skind" column="skind"/>	
+			
+			
+
+			<collection property="fileDto" resultMap="FileDto2"></collection>
+		</resultMap>
+	
+		
+		<!--메인화면 이미지 뜨게하자 -->
+		<select id="showList2" parameterType="com.exhibition.dto3.ShowDto" resultMap="ShowDto2"> 
+		SELECT 
+			SHOWTBL.snum, SHOWTBL.stitle, SHOWTBL.slocation, SHOWTBL.sdday,SHOWTBL.sage,  SHOWTBL.stime, SHOWTBL.sprice, SHOWTBL.userid,SHOWTBL.filecount,SHOWTBL.skind,
+			SHOWFILES.filenum , SHOWFILES.sboardnum, SHOWFILES.fileoriname, SHOWFILES.filename,SHOWFILES.fileextension , SHOWFILES.fileurl 
+		FROM
+			SHOWTBL
+			JOIN SHOWFILES
+			ON SHOWTBL.snum = SHOWFILES.sboardnum
+		</select>
+		
+	     
+	     <!-- //조인테이블 -->
+	     
+	     <!-- 이벤트게시판
+	     <insert id="writeQuestion">
+			INSERT INTO aboard(qnum, qid, qcontent, qemail ) VALUES(aboard_SEQ.nextval,#{param1}, #{param2}, #{param3})
+		</insert>
+		-->
+		
+		
+		
+		<insert id="writeQuestion">
+			INSERT INTO aboard(qnum, qid, qname, qcontent, qemail ,qfilecount) VALUES(aboard_SEQ.nextval,#{param1}, #{param2}, #{param3}, #{param4})
+		</insert>
+		
+		<select id="questionList" resultType="com.exhibition.dto2.EventBDto"> <!-- ROWNUM 오라클에 자동생성되는 번호 A와 PAGE는 가상의 필드-->
+			SELECT * FROM
+				(SELECT A.*,Floor((ROWNUM-1)/#{amount}+1)PAGE,ROWNUM <!--소수점 버림 함수 Floor를 사용 amount는 5 -->
+				FROM
+				(SELECT * FROM aboard ORDER BY qnum DESC)A)
+			WHERE PAGE = #{pageNum}
+			</select>
+		
+		<select id="questionView" resultType="com.exhibition.dto2.EventBDto">
+			SELECT * FROM aboard WHERE qnum=#{param1}
+		</select>	
+		
+			<update id="questionModify">
+		 	update aboard set qcontent=#{param2},qemail=#{param3} where qnum=#{param1}
+		</update>
+		
+		<delete id="questionDelete">
+			DELETE FROM aboard WHERE qnum=#{param1}
+		</delete>
+		
+		 <select id="boardAllCount" resultType="int">
+			select count(*) from aboard 
+		</select> 
+		<select id="eventList" resultType="com.exhibition.dto2.EventBDto">
+			SELECT * FROM aboard ORDER BY qnum DESC 
+		</select>
+		
+		 <!-- 이벤트파일업로드 SQL -->
+		<insert id="efileInfoInsert">
+			INSERT INTO eventfiles(efilenum, eboardnum, efileoriname, efilename, efileextension, efileurl) 
+			VALUES (eventfiles_seq.nextval, #{param1}, #{param2}, #{param3}, #{param4}, #{param5})
+		</insert>
+		
+		<select id="eboardLatestInfo" resultType="com.exhibition.dto2.EventBDto">
+			SELECT * FROM aboard WHERE qid = #{param1} ORDER BY qnum DESC
+		</select>
+		
+		<select id="egetFileInfo" resultType="com.exhibition.dto2.EfileDto">
+			SELECT * FROM eventfiles WHERE eboardnum=#{param1}
+		</select>
+
+
+	 <!-- 티켓예매 SQL -->
+      <!-- 티켓 예매하기  -->
+      <insert id="ticketing">
+      insert into SHOWTBL2(snum, stitle, slocation, sdday, stime,sage,sprice,userid,count,liker)
+      VALUES(SHOWTBL2_SEQ.nextval,#{param1}, #{param2}, #{param3},#{param4},#{param5}, #{param6},#{param7},#{param8},0) 
+      </insert>
+   
+      <!-- 예매하기에서 좋아요 보내기 -->
+      <update id="rivewLikeHit">
+         UPDATE SHOWTBL SET liker=liker+1  WHERE snum=#{param1}
+      </update>
+      
+      
+	<!-- 티켓 예매 확인정보 가져오기 -->
+	
+	<resultMap type="com.exhibition.dto2.MemberDto" id="memberDto2">
+		<result property="mid" column="mid"/>
+		<result property="mpw" column="mpw"/>
+		<result property="mname" column="mname"/>
+		<result property="memail" column="memail"/>	
+		<result property="mdate" column="mdate"/>	
+	</resultMap>
+	
+	<resultMap type="com.exhibition.dto3.ShowDto2" id="ShowDto3">
+		<result property="snum" column="snum"/>
+		<result property="stitle" column="stitle"/>
+		<result property="slocation" column="slocation"/>
+		<result property="sdday" column="sdday"/>
+		<result property="stime" column="stime"/>
+		<result property="sage" column="sage"/>	
+		<result property="sprice" column="sprice"/>	
+		<result property="userid" column="userid"/>	
+		<result property="count" column="count"/>	
+		<result property="filecount" column="filecount"/>
+		<result property="skind" column="skind"/>	
+		
+		<collection property="memberDto" resultMap="memberDto2"></collection>
+	</resultMap>
+	
+	<select id="ticketConfirm" parameterType="com.exhibition.dto3.ShowDto2" resultMap="ShowDto3">
+		
+		SELECT 
+			SHOWTBL2.snum, SHOWTBL2.stitle, SHOWTBL2.slocation, SHOWTBL2.sdday, SHOWTBL2.stime, SHOWTBL2.sage, SHOWTBL2.sprice, SHOWTBL2.userid, SHOWTBL2.count,SHOWTBL2.skind,
+			emember.mid , emember.mname, emember.memail
+		FROM
+			SHOWTBL2
+			JOIN emember
+			ON SHOWTBL2.userid = emember.mid
+		WHERE SHOWTBL2.userid=#{param1}
+		
+	</select>
+	
+	<!-- 티켓 예매 취소하기  -->
+		<delete id="ticketDelete">
+		DELETE FROM SHOWTBL2 WHERE snum=#{param1}
+	</delete>
+	
+	
+	<!--230112추가 sm-->
+	<!-- 공연 정보 가져오기 -->
+   <select id="ticketList" resultType="com.exhibition.dto3.ShowDto"> 
+      SELECT * FROM
+         (SELECT A.*,Floor((ROWNUM-1)/#{amount}+1)PAGE,ROWNUM 
+         FROM
+         (SELECT * FROM SHOWTBL ORDER BY snum DESC)A)
+      WHERE PAGE = #{pageNum}
+      </select>
+
+   <!-- 공연 정보 숫자세기 -->
+   <select id="ticketAllCount" resultType="int">
+      SELECT COUNT(*) FROM SHOWTBL
+   </select>
+
+
+	
+	<!--230112추가 sm-->
+	<!-- 공연 검색하기 -->
+   <select id="ShowSearchTitleList" parameterType="com.exhibition.dto.Criteria3" resultType="com.exhibition.dto3.ShowDto">
+      SELECT * FROM
+         (SELECT A.*,Floor((ROWNUM-1)/#{amount}+1)PAGE,ROWNUM
+         FROM
+         (SELECT * FROM SHOWTBL WHERE stitle LIKE '%' || #{searchKey} || '%' ORDER BY snum DESC)A)
+      WHERE PAGE = #{pageNum}
+      
+   </select>
+   
+   <select id="ShowSearchLocarionList" parameterType="com.exhibition.dto.Criteria3" resultType="com.exhibition.dto3.ShowDto">
+      SELECT * FROM
+         (SELECT A.*,Floor((ROWNUM-1)/#{amount}+1)PAGE,ROWNUM
+         FROM
+         (SELECT * FROM SHOWTBL WHERE slocation LIKE '%' || #{searchKey} || '%' ORDER BY snum DESC)A)
+      WHERE PAGE = #{pageNum}      
+   </select>
+   
+
+   
+   <select id="ShowSearchSkindList" parameterType="com.exhibition.dto.Criteria3" resultType="com.exhibition.dto3.ShowDto">
+      SELECT * FROM
+         (SELECT A.*,Floor((ROWNUM-1)/#{amount}+1)PAGE,ROWNUM
+         FROM
+         (SELECT * FROM SHOWTBL WHERE skind LIKE '%' || #{searchKey} || '%' ORDER BY snum DESC)A)
+      WHERE PAGE = #{pageNum}
+   </select>
+	
+
+	<!-- 인덱스 공연 장르별 리스트 가져오기-->
+   <select id="showMusicalList" parameterType="com.exhibition.dto3.ShowDto" resultMap="ShowDto2">
+      SELECT 
+         SHOWTBL.snum, SHOWTBL.stitle, SHOWTBL.slocation, SHOWTBL.sdday,SHOWTBL.sage,  SHOWTBL.stime, SHOWTBL.sprice, SHOWTBL.userid,SHOWTBL.filecount,SHOWTBL.skind,
+         SHOWFILES.filenum , SHOWFILES.sboardnum, SHOWFILES.fileoriname, SHOWFILES.filename,SHOWFILES.fileextension , SHOWFILES.fileurl 
+      FROM
+         SHOWTBL
+         JOIN SHOWFILES
+         ON SHOWTBL.snum = SHOWFILES.sboardnum
+      WHERE showtbl.skind = #{param1}
+      
+   </select>
+   <select id="showClassicList" parameterType="com.exhibition.dto3.ShowDto" resultMap="ShowDto2">
+      
+      SELECT 
+         SHOWTBL.snum, SHOWTBL.stitle, SHOWTBL.slocation, SHOWTBL.sdday,SHOWTBL.sage,  SHOWTBL.stime, SHOWTBL.sprice, SHOWTBL.userid,SHOWTBL.filecount,SHOWTBL.skind,
+         SHOWFILES.filenum , SHOWFILES.sboardnum, SHOWFILES.fileoriname, SHOWFILES.filename,SHOWFILES.fileextension , SHOWFILES.fileurl 
+      FROM
+         SHOWTBL
+         JOIN SHOWFILES
+         ON SHOWTBL.snum = SHOWFILES.sboardnum
+      WHERE showtbl.skind = #{param1}
+      
+   </select>
+   <select id="showConsertList" parameterType="com.exhibition.dto3.ShowDto" resultMap="ShowDto2">
+      
+      SELECT 
+         SHOWTBL.snum, SHOWTBL.stitle, SHOWTBL.slocation, SHOWTBL.sdday,SHOWTBL.sage,  SHOWTBL.stime, SHOWTBL.sprice, SHOWTBL.userid,SHOWTBL.filecount,SHOWTBL.skind,
+         SHOWFILES.filenum , SHOWFILES.sboardnum, SHOWFILES.fileoriname, SHOWFILES.filename,SHOWFILES.fileextension , SHOWFILES.fileurl 
+      FROM
+         SHOWTBL
+         JOIN SHOWFILES
+         ON SHOWTBL.snum = SHOWFILES.sboardnum
+      WHERE showtbl.skind = #{param1}
+      
+   </select>
+   <select id="showTheaterList" parameterType="com.exhibition.dto3.ShowDto" resultMap="ShowDto2">
+      
+      SELECT 
+         SHOWTBL.snum, SHOWTBL.stitle, SHOWTBL.slocation, SHOWTBL.sdday,SHOWTBL.sage,  SHOWTBL.stime, SHOWTBL.sprice, SHOWTBL.userid,SHOWTBL.filecount,SHOWTBL.skind,
+         SHOWFILES.filenum , SHOWFILES.sboardnum, SHOWFILES.fileoriname, SHOWFILES.filename,SHOWFILES.fileextension , SHOWFILES.fileurl 
+      FROM
+         SHOWTBL
+         JOIN SHOWFILES
+         ON SHOWTBL.snum = SHOWFILES.sboardnum
+      WHERE showtbl.skind = #{param1}
+      
+   </select>
+   <select id="showFamilyList" parameterType="com.exhibition.dto3.ShowDto" resultMap="ShowDto2">
+      
+      SELECT 
+         SHOWTBL.snum, SHOWTBL.stitle, SHOWTBL.slocation, SHOWTBL.sdday,SHOWTBL.sage,  SHOWTBL.stime, SHOWTBL.sprice, SHOWTBL.userid,SHOWTBL.filecount,SHOWTBL.skind,
+         SHOWFILES.filenum , SHOWFILES.sboardnum, SHOWFILES.fileoriname, SHOWFILES.filename,SHOWFILES.fileextension , SHOWFILES.fileurl 
+      FROM
+         SHOWTBL
+         JOIN SHOWFILES
+         ON SHOWTBL.snum = SHOWFILES.sboardnum
+      WHERE showtbl.skind = #{param1}
+      
+   </select>
+	
+	<select id="ShowSearchSpriceList" parameterType="com.exhibition.dto.Criteria3" resultType="com.exhibition.dto3.ShowDto">
+      SELECT * FROM
+         (SELECT A.*,Floor((ROWNUM-1)/#{amount}+1)PAGE,ROWNUM
+         FROM
+         (SELECT * FROM SHOWTBL WHERE sprice = #{searchKey} ORDER BY snum DESC   )A)
+      WHERE PAGE = #{pageNum}
+   </select>
+   
+   <!-- 검색된 리스트 총개수 불러오기 -->
+   <select id="searchTitleListCount" resultType="int">
+         SELECT COUNT(*) FROM showtbl WHERE stitle LIKE '%' || #{param1} || '%'
+   </select>
+   
+   <select id="searchLocationListCount" resultType="int">
+         SELECT COUNT(*) FROM showtbl WHERE slocation LIKE '%' || #{param1} || '%'
+   </select>
+   
+    <select id="searchPriceListCount" resultType="int">
+         SELECT COUNT(*) FROM showtbl WHERE sprice = #{param1}
+   </select>
+   
+    <select id="searchKindListCount" resultType="int">
+         SELECT COUNT(*) FROM showtbl WHERE skind = #{param1}
+   </select>
+	
+	</mapper>
+	
+	
