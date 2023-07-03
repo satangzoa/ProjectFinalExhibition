@@ -1,5 +1,5 @@
 # ProjectFinalExhibition
 <br>
-프로젝트 짧은 시연영상
+프로젝트 시연영상
 <br>
-https://github.com/satangzoa/ProjectFinalExhibition/assets/115125899/2ccdd41e-a4c3-413c-a80d-73904f9e2441
+<img  width="1000%" src="https://github.com/satangzoa/ProjectFinalExhibition/assets/115125899/2dc62b68-e986-4293-b4f7-2abb11d437f2">
